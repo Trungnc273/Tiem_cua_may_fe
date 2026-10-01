@@ -1,23 +1,18 @@
-import assert from "node:assert/strict";
-import test from "node:test";
-import { demoProducts, filterDemoProducts } from "./catalog.ts";
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { formatVnd, validateCategoriesResponse, validateProductsResponse } from './catalog.ts';
 
-test("demo catalog search returns all fixtures for an empty search", () => {
-  assert.equal(filterDemoProducts("   ").length, 4);
+const validProduct = { slug: 'vay-may', name: 'Váy Mây', description: 'Mẫu thử', basePriceVnd: 259000, priceVnd: 259000, isFeatured: false, isNew: true, categorySlug: 'vay-dam', categoryName: 'Váy đầm', image: '/demo/product-floral-dress.png', colors: ['#A9D6F5'] };
+test('catalog product response passes runtime validation', () => {
+  const parsed = validateProductsResponse({ data: [validProduct], pagination: { page: 1, limit: 20, total: 1, pages: 1 } });
+  assert.equal(parsed.success, true);
 });
-
-test("demo catalog search matches product names without case sensitivity", () => {
-  assert.deepEqual(filterDemoProducts("BLOUSE").map((product) => product.name), ["Áo blouse nơ tay phồng"]);
+test('catalog response rejects a formatted price or malformed pagination', () => {
+  assert.equal(validateProductsResponse({ data: [{ ...validProduct, priceVnd: '259.000đ' }], pagination: { page: 1, limit: 20, total: 1, pages: 1 } }).success, false);
+  assert.equal(validateProductsResponse({ data: [validProduct], pagination: { page: 1, limit: 500, total: 1, pages: 1 } }).success, false);
 });
-
-test("demo catalog search matches Vietnamese text and accented letters", () => {
-  assert.deepEqual(filterDemoProducts("VÁY").map((product) => product.name), [
-    "Chân váy tầng bồng bềnh",
-    "Váy hoa nhí hai dây",
-  ]);
+test('category shortcuts validate only public slug/name projection', () => {
+  assert.equal(validateCategoriesResponse({ data: [{ slug: 'vay-dam', name: 'Váy đầm', iconKey: 'dress' }] }).success, true);
+  assert.equal(validateCategoriesResponse({ data: [{ slug: '../admin', name: 'Sai' }] }).success, false);
 });
-
-test("unknown terms return none and each fixture keeps its DEMO label", () => {
-  assert.deepEqual(filterDemoProducts("không có mẫu này"), []);
-  assert.equal(demoProducts.every((product) => product.badge === "DEMO"), true);
-});
+test('integer VND formats as Vietnamese đồng', () => assert.equal(formatVnd(259000), '259.000đ'));
