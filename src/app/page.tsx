@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
+import { demoProducts, filterDemoProducts } from "./catalog";
 
 type IconName = "menu" | "search" | "bag" | "shirt" | "dress" | "pants" | "skirt" | "heart" | "home" | "grid" | "user" | "truck" | "box" | "shield" | "arrow" | "scan";
 
@@ -29,18 +30,11 @@ const categories: { name: string; icon: IconName }[] = [
   { name: "Tất cả", icon: "shirt" }, { name: "Váy đầm", icon: "dress" }, { name: "Áo", icon: "shirt" },
   { name: "Quần", icon: "pants" }, { name: "Chân váy", icon: "skirt" }, { name: "Phụ kiện", icon: "bag" },
 ];
-const products = [
-  { name: "Áo blouse nơ tay phồng", price: "259.000đ", badge: "DEMO", tones: ["#ffffff", "#a9d0eb", "#f3ced0", "#bbb"] },
-  { name: "Chân váy tầng bồng bềnh", price: "239.000đ", badge: "DEMO", tones: ["#efe4d1", "#f2c9cc", "#343434"] },
-  { name: "Áo khoác cardigan basic", price: "299.000đ", badge: "DEMO", tones: ["#a8cee9", "#f2e7d5", "#f1c9c9", "#bbb"] },
-  { name: "Váy hoa nhí hai dây", price: "269.000đ", badge: "DEMO", tones: ["#a6c9e8", "#f0e2cf", "#f1c9cd"] },
-];
-
 export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState("Tất cả");
   const [query, setQuery] = useState("");
   const [favorites, setFavorites] = useState<number[]>([]);
-  const shownProducts = useMemo(() => products.filter((item) => item.name.toLocaleLowerCase("vi").includes(query.toLocaleLowerCase("vi"))), [query]);
+  const shownProducts = useMemo(() => filterDemoProducts(query), [query]);
   const toggleFavorite = (index: number) => setFavorites((current) => current.includes(index) ? current.filter((i) => i !== index) : [...current, index]);
 
   const photos = ["product-blouse.png", "product-skirt.png", "product-cardigan.png", "product-floral-dress.png"];
@@ -68,7 +62,7 @@ export default function HomePage() {
     <section className="products-section" id="new-arrivals">
       <div className="section-heading"><h2>Mới về <span>♡</span></h2><a href="#catalog">Xem tất cả <Icon name="arrow" size={18}/></a></div>
       <p className="demo-note">Sản phẩm demo · hình ảnh minh họa</p>
-      <div className="product-grid">{shownProducts.map((product) => { const index = products.indexOf(product); return <article className="product-card" key={product.name}>
+      <div className="product-grid">{shownProducts.map((product) => { const index = demoProducts.indexOf(product); return <article className="product-card" key={product.name}>
         <a href="#product" className={`product-photo product-photo-${index + 1}`} aria-label={`Xem ${product.name}`}><Image src={`/demo/${photos[index]}`} alt={`Ảnh minh họa ${product.name}`} fill sizes="(max-width: 699px) 50vw, 25vw"/><span className={`badge ${index > 1 ? "badge-pink" : ""}`}>{product.badge}</span></a>
         <button className={`favorite ${favorites.includes(index) ? "is-favorite" : ""}`} aria-label={favorites.includes(index) ? "Bỏ yêu thích" : "Thêm vào yêu thích"} aria-pressed={favorites.includes(index)} onClick={() => toggleFavorite(index)}><Icon name="heart" size={19} filled={favorites.includes(index)}/></button>
         <div className="product-details"><a href="#product" className="product-name">{product.name}</a><div className="price-row"><strong>{product.price}</strong><div className="swatches" aria-label="Màu sắc">{product.tones.map((tone, i) => <i key={`${tone}-${i}`} style={{ backgroundColor: tone }} />)}</div></div></div>

@@ -2,14 +2,16 @@
   "name": "tiem-cua-may-fe",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "packageManager": "pnpm@12.4.1",
-  "engines": { "node": ">=20.9.0" },
+  "engines": { "node": ">=22.18.0" },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint src",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --disable-warning=ExperimentalWarning --test src/app/catalog.test.ts"
   },
   "dependencies": {
     "next": "16.3.5",
