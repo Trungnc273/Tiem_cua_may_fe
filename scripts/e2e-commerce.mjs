@@ -24,13 +24,16 @@ async function capture(name,pathname,viewport={width:390,height:844}){await page
 try{
   const health=await fetch(`${apiUrl}/ready`);if(!health.ok)throw new Error('Commerce API is not ready.');
   await page.setViewportSize({width:1440,height:900});await open('/admin/login');
-  await page.getByLabel('Email').fill(adminEmail);await page.getByLabel('Mật khẩu').fill(adminPassword);await page.getByRole('button',{name:'Đăng nhập'}).click();await page.waitForURL('**/admin/orders');
+  await page.locator('.admin-form input[name=email]').fill(adminEmail);await page.locator('.admin-form input[name=password]').fill(adminPassword);await page.locator('.admin-form button').click();await page.waitForURL('**/admin/orders');
   await open('/admin/products');
-  const productForm=page.locator('.admin-product-form').filter({hasText:'ao-blouse-no-tay'});
-  await productForm.locator('input[name=price]').fill('259000');await productForm.locator('input[name=discount]').fill('20');await productForm.getByRole('button',{name:'Lưu'}).click();
-  await page.getByRole('status').filter({hasText:'Đã lưu'}).waitFor();
-  await page.locator('input[name=phone]').fill('0876146498');await page.locator('input[name=messenger]').fill('https://www.facebook.com/tiemcuamay04');await page.locator('input[name=fee]').fill('25000');await page.getByRole('button',{name:'Lưu cài đặt'}).click();await page.getByRole('status').filter({hasText:'Đã lưu cài đặt'}).waitFor();
-  await overflow('admin-products-settings-desktop');await page.screenshot({path:path.join(output,'admin-products-settings-desktop-1440x900.png'),animations:'disabled',fullPage:true});
+  const productRow=page.locator('.product-admin-table tbody tr').filter({hasText:'ao-blouse-no-tay'});
+  await productRow.getByRole('button',{name:'Mở'}).click();
+  await page.getByRole('heading',{name:'Thông tin sản phẩm'}).waitFor();
+  await page.locator('.admin-product-editor input[name=price]').fill('259000');await page.locator('.admin-product-editor input[name=discount]').fill('20');await page.locator('.admin-product-editor button.commerce-primary').click();
+  await page.getByRole('status').filter({hasText:'Đã lưu thông tin sản phẩm'}).waitFor();
+  await open('/admin/settings');
+  await page.locator('input[name=phone]').fill('0876146498');await page.locator('input[name=messenger]').fill('https://www.facebook.com/tiemcuamay04');await page.locator('input[name=fee]').fill('25000');await page.locator('.settings-single button').click();await page.getByRole('status').filter({hasText:'Đã lưu cài đặt cửa hàng'}).waitFor();
+  await overflow('admin-settings-desktop');await page.screenshot({path:path.join(output,'admin-settings-desktop-1440x900.png'),animations:'disabled',fullPage:true});
 
   await page.setViewportSize({width:390,height:844});await open('/products/ao-blouse-no-tay');
   await page.getByRole('button',{name:'Xanh baby'}).click();await page.getByRole('button',{name:'M',exact:true}).click();
@@ -55,12 +58,12 @@ try{
   await open('/products');await overflow('listing-regression-desktop');await page.screenshot({path:path.join(output,'listing-regression-desktop-1440x900.png'),animations:'disabled',fullPage:true});
   await open('/admin/orders');await page.getByText(orderCode,{exact:true}).waitFor();await overflow('admin-orders-desktop');await page.screenshot({path:path.join(output,'admin-orders-desktop-1440x900.png'),animations:'disabled',fullPage:true});
   await page.getByRole('link',{name:orderCode}).click();await page.waitForURL(/\/admin\/orders\/[0-9a-f-]+$/);await page.getByRole('heading',{name:orderCode}).waitFor();await overflow('admin-order-detail-desktop');await page.screenshot({path:path.join(output,'admin-order-detail-desktop-1440x900.png'),animations:'disabled',fullPage:true});
-  await open('/admin/products');await page.locator('input[name=fee]').fill('');await page.locator('.admin-settings-form button').click();await page.locator('.admin-message').waitFor();
+  await open('/admin/settings');await page.locator('input[name=fee]').fill('');await page.locator('.settings-single button').click();await page.getByRole('status').filter({hasText:'Đã lưu cài đặt cửa hàng'}).waitFor();
   await page.setViewportSize({width:390,height:844});await open('/products/ao-blouse-no-tay');await page.locator('.color-option').nth(1).click();await page.locator('.size-option').first().click();await page.locator('.add-to-cart').click();await page.locator('.variant-picker [role=status]').waitFor();await page.locator('.cart-button').click();await page.waitForURL('**/gio-hang');await page.locator('input[name=customerName]').waitFor({state:'visible'});
   if(await page.locator('.shipping-unconfigured').count()<1)throw new Error('Unconfigured shipping was not explained to the customer.');
   if(!await page.locator('.checkout-form button.commerce-primary').isDisabled())throw new Error('Order submission stayed enabled without a shipping fee.');
   await overflow('shipping-unconfigured-mobile');await page.screenshot({path:path.join(output,'shipping-unconfigured-mobile-390x844.png'),animations:'disabled',fullPage:true});
-  await open('/admin/products');await page.locator('input[name=fee]').fill('25000');await page.locator('.admin-settings-form button').click();await page.locator('.admin-message').waitFor();
+  await open('/admin/settings');await page.locator('input[name=fee]').fill('25000');await page.locator('.settings-single button').click();await page.getByRole('status').filter({hasText:'Đã lưu cài đặt cửa hàng'}).waitFor();
   if(errors.length)throw new Error(`Browser errors: ${errors.join(' | ')}`);
   console.log(JSON.stringify({status:'passed',orderCode,discount:true,cart:true,guestOrder:true,admin:true,contactLinks:true,screenshots:output,horizontalOverflow:false,browserErrors:errors.length},null,2));
 }finally{await browser.close()}

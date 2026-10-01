@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import { commerceFetch, formatMoney, notifyCartChanged, responseMessage } from '../../lib/commerce';
+import { commerceFetch, commerceImageUrl, formatMoney, notifyCartChanged, responseMessage } from '../../lib/commerce';
 
 type CartItem = { itemId: string; variantId: string; slug: string; productName: string; sku: string; size: string; colorName: string; quantity: number; stock: number; available: boolean; originalPriceVnd: number; salePriceVnd: number; discountPercent: number; hasDiscount: boolean; lineTotalVnd: number; imageUrl: string };
 type CartData = { items: CartItem[]; subtotalVnd: number; shippingFeeVnd: number | null; shippingConfigured: boolean; totalVnd: number | null };
@@ -70,7 +70,7 @@ export default function CartClient() {
       : <div className="cart-layout">
         <section className="cart-items" aria-label="Sản phẩm trong giỏ">
           {cart.items.map((item) => <article className="cart-item" key={item.itemId}>
-            <Link href={`/products/${item.slug}`} className="cart-image">{item.imageUrl && <Image src={item.imageUrl} alt={item.productName} fill unoptimized/>}</Link>
+            <Link href={`/products/${item.slug}`} className="cart-image">{item.imageUrl && <Image src={commerceImageUrl(item.imageUrl)} alt={item.productName} fill unoptimized/>}</Link>
             <div className="cart-item-copy">
               <Link href={`/products/${item.slug}`} className="cart-item-title">{item.productName}</Link>
               <p>{item.colorName} · {item.size}</p>

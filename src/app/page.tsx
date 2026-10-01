@@ -18,7 +18,7 @@ function Icon({ name, size = 24, filled = false }: { name: IconName; size?: numb
   };
   return <svg {...common}>{paths[name]}</svg>;
 }
-const iconByKey: Record<string, IconName> = { dress: 'dress', shirt: 'shirt', pants: 'pants', skirt: 'skirt', bag: 'bag' };
+const iconByKey: Record<string, IconName> = { dress: 'dress', shirt: 'shirt', pants: 'pants', skirt: 'skirt', accessory: 'bag' };
 
 export default async function HomePage() {
   const [{ categories, available: categoriesAvailable }, { products, available: productsAvailable }] = await Promise.all([getCategories(), getProducts({ newOnly: 'true', limit: 4 })]);

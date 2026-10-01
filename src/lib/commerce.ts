@@ -1,6 +1,7 @@
 'use client';
 
 export const commerceApi = (path: string) => `${(process.env.NEXT_PUBLIC_CATALOG_API_URL ?? 'http://127.0.0.1:4000').replace(/\/$/, '')}${path}`;
+export const commerceImageUrl = (path: string) => path.startsWith('/api/v1/public/media/products/') ? commerceApi(path) : path;
 export async function commerceFetch(path: string, init: RequestInit = {}) {
   return fetch(commerceApi(path), { ...init, credentials: 'include', cache: 'no-store', headers: { ...(init.body ? { 'Content-Type': 'application/json' } : {}), ...init.headers } });
 }

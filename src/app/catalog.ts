@@ -13,6 +13,8 @@ export type CatalogCategory = z.infer<typeof categorySchema>;
 export function validateProductsResponse(value: unknown) { return listResponseSchema.safeParse(value); }
 export function validateCategoriesResponse(value: unknown) { return categoriesResponseSchema.safeParse(value); }
 const apiBase = (process.env.CATALOG_API_URL ?? process.env.NEXT_PUBLIC_CATALOG_API_URL ?? 'http://127.0.0.1:4000').replace(/\/$/, '');
+const publicApiBase = (process.env.NEXT_PUBLIC_CATALOG_API_URL ?? apiBase).replace(/\/$/, '');
+const imageUrl = (value: string) => value.startsWith('/api/v1/public/media/products/') ? `${publicApiBase}${value}` : value;
 
 async function readJson(path: string): Promise<unknown> {
   try {
@@ -26,7 +28,7 @@ export async function getProducts(params: Record<string, string | number | undef
   for (const [key, value] of Object.entries(params)) if (value !== undefined && value !== '') query.set(key, String(value));
   const payload = await readJson(`/api/v1/public/products${query.size ? `?${query}` : ''}`);
   const parsed = validateProductsResponse(payload);
-  return { products: parsed.success ? parsed.data.data : [], pagination: parsed.success ? parsed.data.pagination : { page: 1, limit: 20, total: 0, pages: 0 }, available: parsed.success };
+  return { products: parsed.success ? parsed.data.data.map((item) => ({ ...item, image: imageUrl(item.image) })) : [], pagination: parsed.success ? parsed.data.pagination : { page: 1, limit: 20, total: 0, pages: 0 }, available: parsed.success };
 }
 export async function getCategories() {
   const payload = await readJson('/api/v1/public/categories');
@@ -35,8 +37,8 @@ export async function getCategories() {
 }
 export async function getProduct(slug: string) {
   const payload = await readJson(`/api/v1/public/products/${encodeURIComponent(slug)}`);
-  const parsed = z.object({ data: z.object({ slug: z.string(), name: z.string(), description: z.string(), basePriceVnd: z.number().int().nonnegative(), discountPercent: z.number().int().min(0).max(100), isFeatured: z.boolean(), isNew: z.boolean(), categorySlug: z.string(), categoryName: z.string(), variants: z.array(z.object({ variantId: z.string().uuid(), size: z.string(), colorCode: z.string(), colorName: z.string(), displayColor: z.string().nullable(), colorHex: z.string().nullable(), originalPriceVnd: z.number().int().nonnegative(), salePriceVnd: z.number().int().nonnegative(), discountPercent: z.number().int(), hasDiscount: z.boolean(), stockQuantity: z.number().int(), priceVnd: z.number().int().nonnegative(), availability: z.enum(['IN_STOCK', 'OUT_OF_STOCK']) })), images: z.array(z.object({ url: z.string(), altText: z.string(), sortOrder: z.number(), isPrimary: z.boolean() })) }) }).safeParse(payload);
-  return parsed.success ? parsed.data.data : null;
+  const parsed = z.object({ data: z.object({ slug: z.string(), name: z.string(), description: z.string(), basePriceVnd: z.number().int().nonnegative(), discountPercent: z.number().int().min(0).max(100), isFeatured: z.boolean(), isNew: z.boolean(), categorySlug: z.string(), categoryName: z.string(), variants: z.array(z.object({ variantId: z.string().uuid(), size: z.string(), colorCode: z.string(), colorName: z.string(), displayColor: z.string().nullable(), colorHex: z.string().nullable(), originalPriceVnd: z.number().int().nonnegative(), salePriceVnd: z.number().int().nonnegative(), discountPercent: z.number().int(), hasDiscount: z.boolean(), stockQuantity: z.number().int(), priceVnd: z.number().int().nonnegative(), availability: z.enum(['IN_STOCK', 'OUT_OF_STOCK']) })), images: z.array(z.object({ url: z.string(), altText: z.string(), sortOrder: z.number(), isPrimary: z.boolean(), variantId: z.string().uuid().nullable().optional() })) }) }).safeParse(payload);
+  return parsed.success ? { ...parsed.data.data, images: parsed.data.data.images.map((image) => ({ ...image, url: imageUrl(image.url) })) } : null;
 }
 export async function getStoreSettings() {
   const payload = await readJson('/api/v1/public/store-settings');

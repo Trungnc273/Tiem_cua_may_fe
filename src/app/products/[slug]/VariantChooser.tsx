@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { commerceFetch, formatMoney, notifyCartChanged, responseMessage } from '../../../lib/commerce';
 
 type Variant = { variantId: string; size: string; colorCode: string; colorName: string; displayColor: string | null; colorHex: string | null; priceVnd: number; originalPriceVnd: number; salePriceVnd: number; discountPercent: number; hasDiscount: boolean; stockQuantity: number; availability: 'IN_STOCK' | 'OUT_OF_STOCK' };
-export default function VariantChooser({ variants, contactPhone, messengerUrl }: { variants: Variant[]; contactPhone: string; messengerUrl: string }) {
+export default function VariantChooser({ variants, contactPhone, messengerUrl, onVariantChange }: { variants: Variant[]; contactPhone: string; messengerUrl: string; onVariantChange?: (variantId: string) => void }) {
   const colors = [...new Map(variants.map((variant) => [variant.colorCode, variant])).values()];
   const [selectedColor, setSelectedColor] = useState(colors[0]?.colorCode ?? '');
   const firstSize = variants.find((variant) => variant.colorCode === colors[0]?.colorCode)?.size ?? '';
@@ -12,6 +12,8 @@ export default function VariantChooser({ variants, contactPhone, messengerUrl }:
   const [busy, setBusy] = useState(false); const [notice, setNotice] = useState('');
   const sizes = variants.filter((variant) => variant.colorCode === selectedColor);
   const variant = sizes.find((item) => item.size === selectedSize) ?? sizes[0];
+  const selectedVariantId = variant?.variantId;
+  useEffect(() => { if (selectedVariantId) onVariantChange?.(selectedVariantId); }, [selectedVariantId, onVariantChange]);
   if (!variant) return <p className="empty-state">Chưa có biến thể đang bán.</p>;
   async function addToCart() {
     setBusy(true); setNotice('');
