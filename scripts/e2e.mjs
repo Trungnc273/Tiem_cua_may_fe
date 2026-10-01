@@ -48,7 +48,7 @@ try {
   const detailImagesLoaded = await page.locator('.detail-gallery img').evaluateAll((images) => images.every((image) => image.complete && image.naturalWidth > 0));
   if (!detailImagesLoaded) throw new Error('One or more detail gallery images failed to load');
   await page.locator('.size-option').filter({ hasText: 'XL' }).click();
-  if (!(await page.getByText('279.000đ').count())) throw new Error('Variant price override was not reflected in the detail view');
+  if (!(await page.getByText('279.000 ₫').count())) throw new Error('Variant price override was not reflected in the detail view');
 
   await open('/products?q=Cardigan&sort=price_asc');
   if (await page.locator('.product-card').count() !== 1) throw new Error('Search did not return the matching catalog product');

@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 const publicProductSchema = z.object({
   slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(140), name: z.string().min(1).max(180), description: z.string(), basePriceVnd: z.number().int().nonnegative(),
-  priceVnd: z.number().int().nonnegative(), isFeatured: z.boolean(), isNew: z.boolean(), categorySlug: z.string(), categoryName: z.string(),
+  priceVnd: z.number().int().nonnegative(), originalPriceVnd: z.number().int().nonnegative().optional(), salePriceVnd: z.number().int().nonnegative().optional(), discountPercent: z.number().int().min(0).max(100).optional(), hasDiscount: z.boolean().optional(), isFeatured: z.boolean(), isNew: z.boolean(), categorySlug: z.string(), categoryName: z.string(),
   image: z.string().refine((value) => value === '' || value.startsWith('/') || /^https?:\/\//.test(value)), colors: z.array(z.string()).nullable().optional(),
 });
 const categorySchema = z.object({ slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(96), name: z.string().min(1).max(120), description: z.string().nullable().optional(), iconKey: z.string().nullable().optional(), imageUrl: z.string().nullable().optional() });
@@ -35,7 +35,12 @@ export async function getCategories() {
 }
 export async function getProduct(slug: string) {
   const payload = await readJson(`/api/v1/public/products/${encodeURIComponent(slug)}`);
-  const parsed = z.object({ data: z.object({ slug: z.string(), name: z.string(), description: z.string(), basePriceVnd: z.number().int().nonnegative(), isFeatured: z.boolean(), isNew: z.boolean(), categorySlug: z.string(), categoryName: z.string(), variants: z.array(z.object({ size: z.string(), colorCode: z.string(), colorName: z.string(), displayColor: z.string().nullable(), colorHex: z.string().nullable(), priceVnd: z.number().int().nonnegative(), availability: z.enum(['IN_STOCK', 'OUT_OF_STOCK']) })), images: z.array(z.object({ url: z.string(), altText: z.string(), sortOrder: z.number(), isPrimary: z.boolean() })) }) }).safeParse(payload);
+  const parsed = z.object({ data: z.object({ slug: z.string(), name: z.string(), description: z.string(), basePriceVnd: z.number().int().nonnegative(), discountPercent: z.number().int().min(0).max(100), isFeatured: z.boolean(), isNew: z.boolean(), categorySlug: z.string(), categoryName: z.string(), variants: z.array(z.object({ variantId: z.string().uuid(), size: z.string(), colorCode: z.string(), colorName: z.string(), displayColor: z.string().nullable(), colorHex: z.string().nullable(), originalPriceVnd: z.number().int().nonnegative(), salePriceVnd: z.number().int().nonnegative(), discountPercent: z.number().int(), hasDiscount: z.boolean(), stockQuantity: z.number().int(), priceVnd: z.number().int().nonnegative(), availability: z.enum(['IN_STOCK', 'OUT_OF_STOCK']) })), images: z.array(z.object({ url: z.string(), altText: z.string(), sortOrder: z.number(), isPrimary: z.boolean() })) }) }).safeParse(payload);
   return parsed.success ? parsed.data.data : null;
+}
+export async function getStoreSettings() {
+  const payload = await readJson('/api/v1/public/store-settings');
+  const parsed = z.object({ data: z.object({ contactPhone: z.string(), messengerUrl: z.string().url(), shippingConfigured: z.boolean() }) }).safeParse(payload);
+  return parsed.success ? parsed.data.data : { contactPhone: '0876146498', messengerUrl: 'https://www.facebook.com/tiemcuamay04', shippingConfigured: false };
 }
 export function formatVnd(amount: number) { return `${new Intl.NumberFormat('vi-VN').format(amount)}đ`; }

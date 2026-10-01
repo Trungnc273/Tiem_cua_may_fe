@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { getCategories, getProducts, formatVnd } from './catalog';
+import CartHeader from '../components/CartHeader';
 
 type IconName = 'menu' | 'search' | 'bag' | 'shirt' | 'dress' | 'pants' | 'skirt' | 'heart' | 'home' | 'grid' | 'user' | 'truck' | 'box' | 'shield' | 'arrow' | 'scan';
 function Icon({ name, size = 24, filled = false }: { name: IconName; size?: number; filled?: boolean }) {
@@ -25,7 +26,7 @@ export default async function HomePage() {
     <header className="site-header">
       <span className="icon-button menu-button" aria-hidden="true"><Icon name="menu" size={26}/></span>
       <Link href="/" className="brand" aria-label="Tiệm Của Mây - trang chủ"><Image src="/brand/logo.jpg" alt="Tiệm Của Mây" width={160} height={110} priority/></Link>
-      <div className="header-actions"><a href="#search" className="icon-button" aria-label="Tìm kiếm"><Icon name="search" size={25}/></a><span className="icon-button cart-button" aria-label="Giỏ hàng, sắp ra mắt"><Icon name="bag" size={24}/></span></div>
+      <div className="header-actions"><a href="#search" className="icon-button" aria-label="Tìm kiếm"><Icon name="search" size={25}/></a><CartHeader/></div>
     </header>
 
     <section className="hero" id="home" aria-label="Chào mừng đến Tiệm Của Mây">
@@ -53,7 +54,7 @@ export default async function HomePage() {
           {product.image && <Image src={product.image} alt={product.name} fill sizes="(max-width: 699px) 50vw, 25vw" unoptimized/>}<span className="badge">MỚI</span>
         </Link>
         <span className="favorite" aria-label="Yêu thích chưa hỗ trợ"><Icon name="heart" size={19}/></span>
-        <div className="product-details"><Link href={`/products/${product.slug}`} className="product-name">{product.name}</Link><div className="price-row"><strong>{formatVnd(product.priceVnd)}</strong><div className="swatches" aria-label="Màu sắc">{(product.colors ?? []).filter((tone) => /^#[0-9a-f]{6}$/i.test(tone)).slice(0, 4).map((tone) => <i key={tone} style={{ backgroundColor: tone }}/>)}</div></div></div>
+        <div className="product-details"><Link href={`/products/${product.slug}`} className="product-name">{product.name}</Link><div className="price-row"><strong>{product.hasDiscount ? <><del>{formatVnd(product.originalPriceVnd ?? product.priceVnd)}</del> <span className="sale-price">{formatVnd(product.salePriceVnd ?? product.priceVnd)}</span></> : formatVnd(product.priceVnd)}</strong>{product.hasDiscount && <span className="discount-pill">-{product.discountPercent}%</span>}<div className="swatches" aria-label="Màu sắc">{(product.colors ?? []).filter((tone) => /^#[0-9a-f]{6}$/i.test(tone)).slice(0, 4).map((tone) => <i key={tone} style={{ backgroundColor: tone }}/>)}</div></div></div>
       </article>)}</div>
       {productsAvailable && products.length === 0 && <p className="empty-state">Chưa có sản phẩm mới trong catalog.</p>}
       {!productsAvailable && <p className="empty-state">Chưa tải được catalog. Vui lòng thử lại sau.</p>}
@@ -61,7 +62,7 @@ export default async function HomePage() {
 
     <section className="freeship-banner"><div className="truck-emblem"><Icon name="truck" size={45}/></div><div className="offer-copy"><span>THÔNG TIN THAM KHẢO</span><strong>TIỆM CỦA MÂY</strong><p>Chính sách cập nhật sau</p></div><div className="banner-note">Mặc xinh<br/>mỗi ngày<br/>cùng Tiệm Của Mây ♡</div><span className="banner-cloud cloud-left"/><span className="banner-cloud cloud-right"/></section>
 
-    <section className="benefits" aria-label="Thông tin mua sắm"><article><span><Icon name="truck" size={27}/></span><p><b>Giao hàng</b><br/>Thông tin cập nhật sau</p></article><article><span><Icon name="box" size={27}/></span><p><b>Đổi trả</b><br/>Chính sách cập nhật sau</p></article><article><span><Icon name="shield" size={27}/></span><p><b>Hỗ trợ mua hàng</b><br/>Thông tin cập nhật sau</p></article></section>
+    <section className="benefits" aria-label="Thông tin mua sắm"><article><span><Icon name="truck" size={27}/></span><p><b>Giao hàng</b><br/>Thông tin cập nhật sau</p></article><article><span><Icon name="box" size={27}/></span><p><b>Thông tin cửa hàng</b><br/>Chính sách cập nhật sau</p></article><article><span><Icon name="shield" size={27}/></span><p><b>Hỗ trợ mua hàng</b><br/>Thông tin cập nhật sau</p></article></section>
     <footer className="site-footer"><Link href="/" className="footer-brand"><Image src="/brand/logo.jpg" alt="Tiệm Của Mây" width={160} height={110}/></Link><p>Mặc xinh như mây, vui cả ngày.</p><nav><span>Về Tiệm</span><span>Liên hệ</span><span>Chính sách</span></nav></footer>
     <nav className="bottom-nav" aria-label="Điều hướng chính"><Link className="active" href="/"><Icon name="home" size={23} filled/><span>Trang chủ</span></Link><Link href="/products"><Icon name="grid" size={23}/><span>Danh mục</span></Link><span aria-disabled="true" title="Yêu thích chưa hỗ trợ"><Icon name="heart" size={24}/><span>Yêu thích</span></span><span aria-disabled="true" title="Tài khoản chưa hỗ trợ"><Icon name="user" size={23}/><span>Tài khoản</span></span></nav>
   </main>;
