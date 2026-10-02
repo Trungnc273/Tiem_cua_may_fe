@@ -28,6 +28,6 @@ export default function VariantChooser({ variants, contactPhone, messengerUrl, o
     <p className="variant-price">{variant.hasDiscount && <del>{formatMoney(variant.originalPriceVnd)}</del>} {formatMoney(variant.salePriceVnd)} {variant.hasDiscount && <span className="discount-pill">-{variant.discountPercent}%</span>}</p><p className={variant.availability === 'IN_STOCK' ? 'availability' : 'availability unavailable'}>{variant.availability === 'IN_STOCK' ? `Còn hàng · ${variant.stockQuantity} sản phẩm` : 'Tạm hết hàng'}</p>
     <button type="button" className="commerce-primary add-to-cart" disabled={busy || variant.availability !== 'IN_STOCK'} onClick={() => void addToCart()}>{busy ? 'Đang thêm…' : variant.availability === 'IN_STOCK' ? 'Thêm vào giỏ hàng' : 'Tạm hết hàng'}</button>
     {notice && <p role="status" className={notice.startsWith('Đã thêm') ? 'commerce-success' : 'commerce-error'}>{notice}</p>}
-    <nav className="product-contact"><a href={`tel:${contactPhone}`}>Gọi Tiệm: {contactPhone}</a><a href={messengerUrl} target="_blank" rel="noopener noreferrer">Nhắn tin Messenger</a></nav>
+    <nav className="product-contact">{contactPhone && <a href={`tel:${contactPhone}`}>Gọi Tiệm: {contactPhone}</a>}{messengerUrl && <a href={messengerUrl} target="_blank" rel="noopener noreferrer">Nhắn tin Messenger</a>}</nav>
   </section>;
 }

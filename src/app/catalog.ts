@@ -43,6 +43,6 @@ export async function getProduct(slug: string) {
 export async function getStoreSettings() {
   const payload = await readJson('/api/v1/public/store-settings');
   const parsed = z.object({ data: z.object({ contactPhone: z.string(), messengerUrl: z.string().url(), shippingConfigured: z.boolean() }) }).safeParse(payload);
-  return parsed.success ? parsed.data.data : { contactPhone: '0876146498', messengerUrl: 'https://www.facebook.com/tiemcuamay04', shippingConfigured: false };
+  return parsed.success ? parsed.data.data : { contactPhone: '', messengerUrl: '', shippingConfigured: false };
 }
 export function formatVnd(amount: number) { return `${new Intl.NumberFormat('vi-VN').format(amount)}đ`; }
