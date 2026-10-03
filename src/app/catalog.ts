@@ -42,7 +42,7 @@ export async function getProduct(slug: string) {
 }
 export async function getStoreSettings() {
   const payload = await readJson('/api/v1/public/store-settings');
-  const parsed = z.object({ data: z.object({ contactPhone: z.string(), messengerUrl: z.string().url(), shippingConfigured: z.boolean() }) }).safeParse(payload);
-  return parsed.success ? parsed.data.data : { contactPhone: '', messengerUrl: '', shippingConfigured: false };
+  const parsed = z.object({ data: z.object({ contactPhone: z.string(), messengerUrl: z.string().url() }) }).safeParse(payload);
+  return parsed.success ? parsed.data.data : { contactPhone: '', messengerUrl: '' };
 }
 export function formatVnd(amount: number) { return `${new Intl.NumberFormat('vi-VN').format(amount)}đ`; }
