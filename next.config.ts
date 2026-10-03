@@ -23,7 +23,11 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   images: { remotePatterns },
   async rewrites() {
-    return [{ source: '/api/:path*', destination: `${apiOrigin}/api/:path*` }];
+    return [
+      { source: '/api/:path*', destination: `${apiOrigin}/api/:path*` },
+      { source: '/health', destination: `${apiOrigin}/health` },
+      { source: '/ready', destination: `${apiOrigin}/ready` },
+    ];
   },
   async headers() {
     return [{
