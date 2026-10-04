@@ -39,12 +39,25 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
   return (
     <main className="site-shell catalog-shell detail-shell">
       <header className="catalog-header detail-header">
-        <Link href="/products" className="catalog-back" aria-label="Quay lại danh sách sản phẩm">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 5-7 7 7 7M8 12h12" /></svg>
-          <span>Sản phẩm</span>
-        </Link>
-        <BrandLink />
-        <CartHeader />
+        <div className="detail-mobile-header">
+          <Link href="/products" className="catalog-back" aria-label="Quay lại danh sách sản phẩm">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 5-7 7 7 7M8 12h12" /></svg>
+          </Link>
+          <BrandLink />
+          <CartHeader />
+        </div>
+        <div className="detail-desktop-header">
+          <BrandLink className="detail-desktop-brand" />
+          <form className="detail-header-search" action="/products" method="get" role="search">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.6"/><path d="m16 16 4.2 4.2"/></svg>
+            <input name="q" aria-label="Tìm kiếm sản phẩm" placeholder="Tìm kiếm sản phẩm..." />
+          </form>
+          <nav className="detail-main-navigation" aria-label="Điều hướng chính">
+            <Link href="/">Trang chủ</Link>
+            <Link href="/products">Sản phẩm</Link>
+          </nav>
+          <CartHeader />
+        </div>
       </header>
       <ProductDetailClient product={product} contactPhone={settings.contactPhone} messengerUrl={settings.messengerUrl} />
       <nav className="catalog-bottom detail-footer" aria-label="Điều hướng cuối trang">

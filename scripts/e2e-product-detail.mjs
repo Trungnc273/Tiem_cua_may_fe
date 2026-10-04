@@ -153,6 +153,25 @@ try {
     const dimensions = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth }));
     if (dimensions.document > dimensions.viewport) throw new Error(label + ' has horizontal overflow: ' + JSON.stringify(dimensions));
   }
+  async function checkStickyClearance() {
+    for (const selector of ['.detail-option-section', '.detail-stock', '.detail-quantity-row', '.detail-information summary']) {
+      const elements = page.locator(selector);
+      for (let index = 0; index < await elements.count(); index += 1) {
+        await elements.nth(index).evaluate((element) => {
+          element.scrollIntoView({ block: 'center', behavior: 'instant' });
+          return new Promise((resolve) => requestAnimationFrame(resolve));
+        });
+        const geometry = await elements.nth(index).evaluate((element) => {
+          const bounds = element.getBoundingClientRect();
+          const stickyTop = document.querySelector('.detail-sticky-purchase').getBoundingClientRect().top;
+          return { top: bounds.top, bottom: bounds.bottom, stickyTop };
+        });
+        if (geometry.top < 0 || geometry.bottom > geometry.stickyTop - 2) {
+          throw new Error('Mobile sticky CTA overlaps ' + selector + ': ' + JSON.stringify(geometry));
+        }
+      }
+    }
+  }
   async function capture(name, viewport) {
     await page.setViewportSize(viewport);
     await openProduct();
@@ -200,6 +219,7 @@ try {
   await checkOverflow('mobile expanded details');
   await description.scrollIntoViewIfNeeded();
   await page.screenshot({ path: path.join(output, 'product-detail-390x844-expanded.png'), animations: 'disabled' });
+  await checkStickyClearance();
 
   await capture('product-detail-430x932', { width: 430, height: 932 });
   await capture('product-detail-768x1024', { width: 768, height: 1024 });
