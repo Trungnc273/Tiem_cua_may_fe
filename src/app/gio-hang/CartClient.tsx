@@ -16,7 +16,7 @@ export default function CartClient() {
   const [cart, setCart] = useState<CartData>(empty);
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [provinceCode, setProvinceCode] = useState('');
-  const [estimateResult, setEstimateResult] = useState<{ provinceCode: string; estimate: Estimate; loaded: boolean }>({ provinceCode: '', estimate: null, loaded: false });
+  const [estimateResult, setEstimateResult] = useState<{ provinceCode: string; estimate: Estimate; state: 'loading' | 'loaded' | 'error' }>({ provinceCode: '', estimate: null, state: 'loading' });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [order, setOrder] = useState<OrderSummary | null>(null);
@@ -26,8 +26,9 @@ export default function CartClient() {
   const reload = useCallback(async () => {
     try {
       const response = await commerceFetch('/api/v1/public/cart');
-      const payload = await response.json();
-      if (response.ok) setCart(payload.data as CartData);
+      const payload = await response.json().catch(() => null);
+      if (response.ok && payload?.data) { setCart(payload.data as CartData); setError(''); }
+      else setError(response.ok ? 'Dữ liệu giỏ hàng không hợp lệ.' : payload?.error?.message ?? 'Không tải được giỏ hàng. Vui lòng thử lại.');
     } catch { setError('Không thể kết nối giỏ hàng. Vui lòng thử lại.'); }
   }, []);
 
@@ -36,8 +37,10 @@ export default function CartClient() {
     void Promise.all([commerceFetch('/api/v1/public/cart'), commerceFetch('/api/v1/public/shipping/provinces')]).then(async ([cartResponse, provinceResponse]) => {
       const [cartPayload, provincePayload] = await Promise.all([cartResponse.json(), provinceResponse.json()]);
       if (!active) return;
-      if (cartResponse.ok) setCart(cartPayload.data as CartData);
-      if (provinceResponse.ok) setProvinces(provincePayload.data as Province[]);
+      if (cartResponse.ok && cartPayload?.data) setCart(cartPayload.data as CartData);
+      else if (active) setError(cartPayload?.error?.message ?? 'Không tải được giỏ hàng. Vui lòng thử lại.');
+      if (provinceResponse.ok && provincePayload?.data) setProvinces(provincePayload.data as Province[]);
+      else if (active) setError(provincePayload?.error?.message ?? 'Không tải được danh sách tỉnh/thành phố.');
     }).catch(() => { if (active) setError('Không thể tải giỏ hàng. Vui lòng thử lại.'); });
     return () => { active = false; };
   }, []);
@@ -47,14 +50,14 @@ export default function CartClient() {
     if (!provinceCode) return () => { active = false; };
     void commerceFetch(`/api/v1/public/shipping/estimate?provinceCode=${encodeURIComponent(provinceCode)}`).then(async (response) => {
       const payload = await response.json();
-      if (active && response.ok) setEstimateResult({ provinceCode, estimate: payload.data.estimate as Estimate, loaded: true });
-      else if (active) setEstimateResult({ provinceCode, estimate: null, loaded: true });
-    }).catch(() => { if (active) setEstimateResult({ provinceCode, estimate: null, loaded: true }); });
+      if (active && response.ok) setEstimateResult({ provinceCode, estimate: payload.data.estimate as Estimate, state: 'loaded' });
+      else if (active) setEstimateResult({ provinceCode, estimate: null, state: 'error' });
+    }).catch(() => { if (active) setEstimateResult({ provinceCode, estimate: null, state: 'error' }); });
     return () => { active = false; };
   }, [provinceCode]);
 
   const estimate = estimateResult.provinceCode === provinceCode ? estimateResult.estimate : null;
-  const estimateLoaded = estimateResult.provinceCode === provinceCode && estimateResult.loaded;
+  const estimateState = estimateResult.provinceCode === provinceCode ? estimateResult.state : 'loading';
 
   async function change(item: CartItem, quantity: number) {
     setBusy(true); setError('');
@@ -89,11 +92,11 @@ export default function CartClient() {
 
   if (order) {
     const hasEstimate = order.estimateMinVnd !== null && order.estimateMaxVnd !== null;
-    return <section className="order-success"><span className="success-mark">✓</span><p className="eyebrow">ĐẶT HÀNG THÀNH CÔNG</p><h1>Tiệm Của Mây đã nhận đơn của bạn.</h1><p>Mã đơn hàng</p><strong className="order-code">{order.code}</strong><p>Nhân viên của Tiệm sẽ liên hệ để xác nhận sản phẩm và phí vận chuyển chính thức trước khi gửi hàng.</p><div className="checkout-totals"><p><span>Tiền hàng</span><b>{formatMoney(order.subtotalVnd)}</b></p><p><span>Phí vận chuyển dự kiến</span><b>{hasEstimate ? `${formatMoney(order.estimateMinVnd!)} – ${formatMoney(order.estimateMaxVnd!)}` : 'Sẽ được xác nhận khi liên hệ'}</b></p>{hasEstimate && <p className="checkout-grand-total"><span>Tạm tính dự kiến</span><b>{formatMoney(order.subtotalVnd + order.estimateMinVnd!)} – {formatMoney(order.subtotalVnd + order.estimateMaxVnd!)}</b></p>}</div><p className="checkout-note">Phí vận chuyển trên chỉ là ước tính. Phí chính thức sẽ được Tiệm xác nhận.</p><Link className="commerce-primary" href="/products">Tiếp tục mua sắm</Link></section>;
+    return <section className="order-success"><span className="success-mark">✓</span><p className="eyebrow">ĐẶT HÀNG THÀNH CÔNG</p><h1>Midora đã nhận đơn của bạn.</h1><p>Mã đơn hàng</p><strong className="order-code">{order.code}</strong><p>Nhân viên Midora sẽ liên hệ để xác nhận sản phẩm và phí vận chuyển chính thức trước khi gửi hàng.</p><div className="checkout-totals"><p><span>Tiền hàng</span><b>{formatMoney(order.subtotalVnd)}</b></p><p><span>Phí vận chuyển dự kiến</span><b>{hasEstimate ? `${formatMoney(order.estimateMinVnd!)} – ${formatMoney(order.estimateMaxVnd!)}` : 'Sẽ được xác nhận khi liên hệ'}</b></p>{hasEstimate && <p className="checkout-grand-total"><span>Tạm tính dự kiến</span><b>{formatMoney(order.subtotalVnd + order.estimateMinVnd!)} – {formatMoney(order.subtotalVnd + order.estimateMaxVnd!)}</b></p>}</div><p className="checkout-note">Phí vận chuyển trên chỉ là ước tính. Midora sẽ xác nhận phí chính thức.</p><Link className="commerce-primary" href="/products">Tiếp tục mua sắm</Link></section>;
   }
 
   return <>
-    <section className="commerce-intro"><p className="eyebrow">MUA SẮM CÙNG TIỆM</p><h1>Giỏ hàng</h1><p>Kiểm tra sản phẩm trước khi gửi yêu cầu đặt hàng.</p></section>
+    <section className="commerce-intro"><p className="eyebrow">MUA SẮM CÙNG MIDORA</p><h1>Giỏ hàng</h1><p>Kiểm tra sản phẩm trước khi gửi yêu cầu đặt hàng.</p></section>
     {error && <p className="commerce-error" role="alert">{error}</p>}
     {!cart.items.length
       ? <section className="commerce-empty"><p>Giỏ hàng của bạn đang trống.</p><Link className="commerce-primary" href="/products">Khám phá sản phẩm</Link></section>
@@ -113,8 +116,9 @@ export default function CartClient() {
             <label>Tỉnh / Thành phố<select name="provinceCode" value={provinceCode} onChange={(event) => setProvinceCode(event.target.value)} required><option value="">Chọn tỉnh hoặc thành phố</option>{provinces.map((province) => <option key={province.code} value={province.code}>{province.label}</option>)}</select></label>
             <label>Địa chỉ chi tiết<textarea name="deliveryAddress" autoComplete="street-address" minLength={5} maxLength={500} rows={3} placeholder="Số nhà, đường, phường/xã" required/></label>
             <label>Ghi chú <span>(không bắt buộc)</span><textarea name="note" maxLength={1000} rows={2}/></label>
-            <div className="checkout-totals"><p><span>Tiền hàng</span><b>{formatMoney(cart.subtotalVnd)}</b></p><p><span>Phí vận chuyển dự kiến</span><b>{!provinceCode || !estimateLoaded ? 'Chọn tỉnh/thành phố' : estimate ? `${formatMoney(estimate.minVnd)} – ${formatMoney(estimate.maxVnd)}` : 'Sẽ được nhân viên xác nhận'}</b></p>{estimate && <p className="checkout-grand-total"><span>Tạm tính dự kiến</span><b>{formatMoney(cart.subtotalVnd + estimate.minVnd)} – {formatMoney(cart.subtotalVnd + estimate.maxVnd)}</b></p>}</div>
-            <p className="checkout-note">Phí vận chuyển trên chỉ là ước tính. Tiệm Của Mây sẽ liên hệ để xác nhận đơn hàng và phí vận chuyển chính thức trước khi gửi hàng.</p>
+            <div className="checkout-totals"><p><span>Tiền hàng</span><b>{formatMoney(cart.subtotalVnd)}</b></p><p><span>Phí vận chuyển dự kiến</span><b>{!provinceCode ? 'Chọn tỉnh/thành phố' : estimateState === 'loading' ? 'Đang tải mức phí…' : estimate ? `${formatMoney(estimate.minVnd)} – ${formatMoney(estimate.maxVnd)}` : estimateState === 'error' ? 'Chưa tải được mức phí' : 'Sẽ được nhân viên xác nhận'}</b></p>{estimate && <p className="checkout-grand-total"><span>Tạm tính dự kiến</span><b>{formatMoney(cart.subtotalVnd + estimate.minVnd)} – {formatMoney(cart.subtotalVnd + estimate.maxVnd)}</b></p>}</div>
+            {estimateState === 'error' && provinceCode && <p className="shipping-unconfigured" role="status">Chưa tải được khoảng phí dự kiến. Bạn vẫn có thể gửi đơn; Midora sẽ xác nhận phí chính thức khi liên hệ.</p>}
+            <p className="checkout-note">Phí vận chuyển trên chỉ là ước tính. Midora sẽ liên hệ để xác nhận đơn hàng và phí vận chuyển chính thức trước khi gửi hàng.</p>
             {cart.items.some((item) => !item.available || item.quantity > item.stock) && <p className="shipping-unconfigured">Một số sản phẩm không còn đủ hàng. Hãy điều chỉnh giỏ trước khi đặt.</p>}
             <button className="commerce-primary" disabled={busy || !canSubmit}>{busy ? 'Đang gửi…' : 'Gửi yêu cầu đặt hàng'}</button>
           </form>

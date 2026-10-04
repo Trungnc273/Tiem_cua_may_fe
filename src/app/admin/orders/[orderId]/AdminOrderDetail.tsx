@@ -17,6 +17,9 @@ export default function AdminOrderDetail({ orderId }: { orderId: string }) {
   const [data, setData] = useState<Detail | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState('');
+  const [pendingAction, setPendingAction] = useState<'shipping' | 'notification' | null>(null);
+  const [loading, setLoading] = useState(true);
 
   async function load() {
     const response = await commerceFetch(`/api/v1/admin/orders/${orderId}`);
@@ -30,32 +33,32 @@ export default function AdminOrderDetail({ orderId }: { orderId: string }) {
       if (response.status === 401) { router.replace('/admin/login'); return; }
       const payload = await response.json();
       if (active && response.ok) setData(payload.data); else if (active) setError(payload.error?.message ?? 'Không tải được đơn hàng.');
-    }).catch(() => { if (active) setError('Không thể kết nối máy chủ.'); });
+    }).catch(() => { if (active) setError('Không thể kết nối máy chủ.'); }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [orderId, router]);
 
   async function update(status: string) {
-    setBusy(true); setError('');
+    setBusy(true); setPendingStatus(status); setPendingAction(null); setError('');
     try { const response = await commerceFetch(`/api/v1/admin/orders/${orderId}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }); if (!response.ok) setError((await response.json()).error?.message ?? 'Không thể cập nhật trạng thái.'); else await load(); }
-    catch { setError('Không thể kết nối máy chủ.'); } finally { setBusy(false); }
+    catch { setError('Không thể kết nối máy chủ.'); } finally { setBusy(false); setPendingStatus(''); }
   }
   async function confirmShipping(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault(); const form = new FormData(event.currentTarget); setBusy(true); setError('');
+    event.preventDefault(); const form = new FormData(event.currentTarget); setBusy(true); setPendingAction('shipping'); setError('');
     const carrierCode = String(form.get('carrierCode'));
     const carrierCustomName = String(form.get('carrierCustomName') ?? '').trim();
     try {
       const response = await commerceFetch(`/api/v1/admin/orders/${orderId}/shipping`, { method: 'PATCH', body: JSON.stringify({ carrierCode, ...(carrierCode === 'OTHER' ? { carrierCustomName } : {}), shippingFinalVnd: Number(form.get('shippingFinalVnd')), trackingNumber: form.get('trackingNumber') }) });
       const payload = await response.json();
       if (!response.ok) setError(payload.error?.message ?? 'Không thể xác nhận phí vận chuyển.'); else await load();
-    } catch { setError('Không thể kết nối máy chủ.'); } finally { setBusy(false); }
+    } catch { setError('Không thể kết nối máy chủ.'); } finally { setBusy(false); setPendingAction(null); }
   }
   async function retryEmail() {
-    setBusy(true); setError('');
+    setBusy(true); setPendingAction('notification'); setError('');
     try { const response = await commerceFetch(`/api/v1/admin/orders/${orderId}/notification/retry`, { method: 'POST' }); if (!response.ok) setError((await response.json()).error?.message ?? 'Không thể gửi lại thông báo.'); else await load(); }
-    catch { setError('Không thể kết nối máy chủ.'); } finally { setBusy(false); }
+    catch { setError('Không thể kết nối máy chủ.'); } finally { setBusy(false); setPendingAction(null); }
   }
 
-  if (!data) return <section className="admin-content"><button className="text-action" onClick={() => router.back()}>← Quay lại</button>{error && <p className="commerce-error">{error}</p>}</section>;
+  if (!data) return <section className="admin-content"><button className="text-action" onClick={() => router.back()}>← Quay lại</button>{error ? <p className="commerce-error" role="alert">{error}</p> : <p role="status">{loading ? 'Đang tải đơn hàng…' : 'Không tìm thấy đơn hàng.'}</p>}</section>;
   const actions: Record<string, string[]> = { NEW: ['CONFIRMED', 'CANCELLED'], CONFIRMED: ['SHIPPING', 'CANCELLED'], SHIPPING: ['COMPLETED'], COMPLETED: [], CANCELLED: [] };
   const actionLabels: Record<string, string> = { CONFIRMED: 'Xác nhận đơn', SHIPPING: 'Đánh dấu đang giao', COMPLETED: 'Hoàn tất', CANCELLED: 'Hủy đơn' };
   const hasEstimate = data.shippingEstimateMinVnd !== null && data.shippingEstimateMaxVnd !== null;
@@ -73,11 +76,12 @@ export default function AdminOrderDetail({ orderId }: { orderId: string }) {
         <label>Tên đơn vị khác<input name="carrierCustomName" defaultValue={data.carrierCustomName ?? ''} maxLength={120} placeholder="Chỉ nhập khi chọn Khác" /></label>
         <label>Phí ship chính thức (₫)<input name="shippingFinalVnd" type="number" min="0" max="2000000000" step="1" defaultValue={data.shippingFeeVnd ?? ''} required /></label>
         <label>Mã vận đơn (không bắt buộc)<input name="trackingNumber" defaultValue={data.trackingNumber ?? ''} maxLength={120} /></label>
-        <button className="commerce-primary" disabled={busy}>Lưu phí ship chính thức</button>
+        <button className="commerce-primary" disabled={busy}>{pendingAction==='shipping'?'Đang lưu…':'Lưu phí ship chính thức'}</button>
       </form>
     </article>
-    <article className="admin-card"><h2>Thông báo email</h2>{data.notification ? <><p>Trạng thái: <strong>{data.notification.status}</strong> · Số lần thử: {data.notification.attempts}</p>{data.notification.lastErrorCode && <p>Mã lỗi: {data.notification.lastErrorCode}</p>}{data.notification.sentAt && <p>Đã gửi lúc: {new Date(data.notification.sentAt).toLocaleString('vi-VN')}</p>}{data.notification.status === 'FAILED' && <button type="button" className="commerce-primary" disabled={busy} onClick={() => void retryEmail()}>Gửi lại thông báo</button>}</> : <p>Thông báo email đã tắt hoặc chưa được tạo cho đơn này.</p>}</article>
+    <article className="admin-card"><h2>Thông báo email</h2>{data.notification ? <><p>Trạng thái: <strong>{data.notification.status}</strong> · Số lần thử: {data.notification.attempts}</p>{data.notification.lastErrorCode && <p>Mã lỗi: {data.notification.lastErrorCode}</p>}{data.notification.sentAt && <p>Đã gửi lúc: {new Date(data.notification.sentAt).toLocaleString('vi-VN')}</p>}{data.notification.status === 'FAILED' && <button type="button" className="commerce-primary" disabled={busy} onClick={() => void retryEmail()}>{pendingAction==='notification'?'Đang gửi lại…':'Gửi lại thông báo'}</button>}</> : <p>Thông báo email đã tắt hoặc chưa được tạo cho đơn này.</p>}</article>
     <article className="admin-card"><h2>Sản phẩm</h2>{data.items.map((item, index) => <div className="admin-order-item" key={`${item.sku}-${index}`}><div><b>{item.productName}</b><p>{item.colorName} · {item.size} · {item.sku}</p><p>{formatMoney(Number(item.saleUnitPriceVnd))}{Number(item.discountPercent) > 0 && <small> (giảm {item.discountPercent}%)</small>} × {item.quantity}</p></div><b>{formatMoney(Number(item.lineTotalVnd))}</b></div>)}</article>
-    <div className="admin-actions">{actions[data.status]?.map((status) => <button key={status} disabled={busy || (status === 'CONFIRMED' && (data.shippingStatus !== 'CONFIRMED' || data.shippingFeeVnd === null || !data.carrierCode))} className={status === 'CANCELLED' ? 'admin-danger' : 'commerce-primary'} onClick={() => void update(status)}>{actionLabels[status]}</button>)}</div>
+    <div className="admin-actions">{actions[data.status]?.map((status) => <button key={status} disabled={busy || (status === 'CONFIRMED' && (data.shippingStatus !== 'CONFIRMED' || data.shippingFeeVnd === null || !data.carrierCode))} className={status === 'CANCELLED' ? 'admin-danger' : 'commerce-primary'} onClick={() => void update(status)}>{busy&&pendingStatus===status?'Đang cập nhật…':actionLabels[status]}</button>)}</div>
+    {actions[data.status]?.includes('CONFIRMED') && (data.shippingStatus !== 'CONFIRMED' || data.shippingFeeVnd === null || !data.carrierCode) && <p className="checkout-note" role="status">Hãy lưu đơn vị vận chuyển và phí ship chính thức ở trên để xác nhận đơn.</p>}
   </section>;
 }

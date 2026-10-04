@@ -56,5 +56,20 @@
 @media(max-width:699px){.site-shell,.commerce-shell:not(.admin-shell),.catalog-shell{padding-bottom:calc(92px + env(safe-area-inset-bottom))}.bottom-nav{height:calc(70px + env(safe-area-inset-bottom));padding-bottom:calc(5px + env(safe-area-inset-bottom))}}
 @media(min-width:700px){.site-shell,.commerce-shell,.catalog-shell{padding-bottom:34px}}
 .admin-settings-form select{width:100%;min-width:0;border:1px solid #dce7ef;border-radius:9px;padding:10px 12px;background:#fff;color:var(--ink)}
+
+/* Functional navigation and accessible catalog controls. */
+.menu-button{position:relative;justify-self:start}
+.menu-button>summary{list-style:none;cursor:pointer}
+.menu-button>summary::-webkit-details-marker{display:none}
+.mobile-menu-panel{position:absolute;z-index:30;top:calc(100% + 8px);left:0;display:grid;min-width:200px;padding:8px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px #183e6720}
+.mobile-menu-panel a{min-height:44px;display:flex;align-items:center;padding:0 12px;border-radius:8px;color:var(--ink);text-decoration:none}
+.mobile-menu-panel a:hover,.mobile-menu-panel a:focus-visible{background:#eef6fc}
+.searchbar{grid-template-columns:34px minmax(0,1fr)}
+.bottom-nav{grid-template-columns:repeat(2,minmax(0,1fr))}
+.site-footer nav a{color:#3977aa;text-decoration:underline;text-underline-offset:3px}
+@media(min-width:700px){.menu-button{display:none}}
 .shipping-confirm-form{grid-template-columns:repeat(2,minmax(0,1fr));align-items:end}
 @media(max-width:760px){.shipping-confirm-form{grid-template-columns:1fr}}
+.category-edit-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:end;width:100%}.category-edit-form label{display:grid;gap:5px;color:#60798f;font-size:12px}.category-edit-form input,.category-edit-form select,.category-edit-form textarea{width:100%;min-height:38px;padding:8px 10px;border:1px solid #dce7ef;border-radius:9px;background:#fff;color:var(--ink)}.category-edit-form .admin-actions{grid-column:1/-1}
+@media(max-width:700px){.category-edit-form{grid-template-columns:repeat(2,minmax(0,1fr))}.category-edit-form label:last-of-type{grid-column:1/-1}}
+.midora-brand{display:inline-flex;align-items:center;gap:9px;color:var(--blue-deep);font-weight:800;text-decoration:none;white-space:nowrap}.midora-brand img{display:block;width:38px;height:38px;object-fit:contain}.midora-brand span{font-size:18px;line-height:1}.site-header .brand{width:auto;height:auto;justify-self:center;display:flex;overflow:visible}.site-header .brand img{width:38px;height:38px}.site-footer .footer-brand{width:auto;height:auto}
