@@ -228,3 +228,11 @@
 .category-edit-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:end;width:100%}.category-edit-form label{display:grid;gap:5px;color:#60798f;font-size:12px}.category-edit-form input,.category-edit-form select,.category-edit-form textarea{width:100%;min-height:38px;padding:8px 10px;border:1px solid #dce7ef;border-radius:9px;background:#fff;color:var(--ink)}.category-edit-form .admin-actions{grid-column:1/-1}
 @media(max-width:700px){.category-edit-form{grid-template-columns:repeat(2,minmax(0,1fr))}.category-edit-form label:last-of-type{grid-column:1/-1}}
 .midora-brand{display:inline-flex;align-items:center;gap:9px;color:var(--blue-deep);font-weight:800;text-decoration:none;white-space:nowrap}.midora-brand img{display:block;width:38px;height:38px;object-fit:contain}.midora-brand span{font-size:18px;line-height:1}.site-header .brand{width:auto;height:auto;justify-self:center;display:flex;overflow:visible}.site-header .brand img{width:38px;height:38px}.site-footer .footer-brand{width:auto;height:auto}
+
+/* Keep the homepage search compact so it doesn't dominate the first screen. */
+.searchbar{width:min(90%,560px);height:38px;margin:12px auto 13px;gap:10px;padding:0 12px}
+.searchbar>svg{width:18px;height:18px}
+@media(min-width:700px){.searchbar{width:min(90%,720px);height:46px;margin:18px auto}}
+
+.publish-checklist{margin-bottom:12px}.publish-checklist h2{margin:0 0 6px;font-size:17px}.publish-checklist p{margin:0;color:#71869a;font-size:13px}.publish-checklist ul{display:grid;gap:6px;margin:12px 0 0;padding-left:20px;color:#a75c45;font-size:13px}.publish-checklist li.is-ready{color:#26845d}.admin-editor-top{scroll-margin-top:16px}
+@media(max-width:480px){.admin-product-editor{grid-template-columns:minmax(0,1fr)}.admin-product-editor .span-all{grid-column:auto}.variant-admin-row,.variant-add-row{grid-template-columns:minmax(0,1fr)}.variant-admin-row button{grid-column:auto}.admin-editor-top>div{flex-wrap:wrap}.publish-checklist{padding:14px}}

@@ -8,8 +8,8 @@ import { commerceFetch, formatMoney, notifyCartChanged, responseMessage } from '
 type Variant = {
   variantId: string;
   size: string;
-  colorCode: string;
-  colorName: string;
+  colorCode: string | null;
+  colorName: string | null;
   displayColor: string | null;
   colorHex: string | null;
   originalPriceVnd: number;
@@ -37,8 +37,8 @@ export default function ProductDetailClient({ product, contactPhone, messengerUr
   const [shareNotice, setShareNotice] = useState('');
   const [failedImageUrl, setFailedImageUrl] = useState('');
 
-  const variant = product.variants.find((item) => item.colorCode === selectedColor && item.size === selectedSize) ?? initialVariant;
-  const colors = useMemo(() => [...new Map(product.variants.map((item) => [item.colorCode, item])).values()], [product.variants]);
+  const variant = product.variants.find((item) => (item.colorCode ?? '') === selectedColor && item.size === selectedSize) ?? initialVariant;
+  const colors = useMemo(() => [...new Map(product.variants.filter((item): item is Variant & { colorCode: string; colorName: string } => Boolean(item.colorCode && item.colorName)).map((item) => [item.colorCode, item])).values()], [product.variants]);
   const sizes = useMemo(() => [...new Set(product.variants.map((item) => item.size))], [product.variants]);
   const orderedImages = useMemo(() => [...product.images].sort((a, b) => a.sortOrder - b.sortOrder), [product.images]);
   const variantImages = variant ? orderedImages.filter((image) => image.variantId === variant.variantId) : [];
@@ -55,14 +55,14 @@ export default function ProductDetailClient({ product, contactPhone, messengerUr
   function selectColor(colorCode: string) {
     const candidates = product.variants.filter((item) => item.colorCode === colorCode);
     const next = candidates.find(available) ?? candidates[0];
-    if (!next) return;
+    if (!next?.colorCode) return;
     setSelectedColor(next.colorCode);
     setSelectedSize(next.size);
     setQuantity(1);
   }
 
   function selectSize(size: string) {
-    const next = product.variants.find((item) => item.colorCode === selectedColor && item.size === size);
+    const next = product.variants.find((item) => (item.colorCode ?? '') === selectedColor && item.size === size);
     if (!next || !available(next)) return;
     setSelectedSize(next.size);
     setQuantity(1);
@@ -177,7 +177,7 @@ export default function ProductDetailClient({ product, contactPhone, messengerUr
 
           {variant ? (
             <section className="detail-purchase" aria-label="Chọn phân loại và đặt mua">
-              <div className="detail-option-section">
+              {colors.length > 0 && <div className="detail-option-section">
                 <h2>Màu sắc <span>{variant.displayColor ?? variant.colorName}</span></h2>
                 <div className="detail-color-options" role="group" aria-label="Chọn màu sắc">
                   {colors.map((color) => {
@@ -199,13 +199,13 @@ export default function ProductDetailClient({ product, contactPhone, messengerUr
                     );
                   })}
                 </div>
-              </div>
+              </div>}
 
               <div className="detail-option-section">
                 <div className="detail-size-heading"><h2>Kích cỡ <span>{variant.size}</span></h2></div>
                 <div className="detail-size-options" role="group" aria-label="Chọn kích cỡ">
                   {sizes.map((size) => {
-                    const sizeVariant = product.variants.find((item) => item.colorCode === selectedColor && item.size === size);
+                    const sizeVariant = product.variants.find((item) => (item.colorCode ?? '') === selectedColor && item.size === size);
                     const disabled = !sizeVariant || !available(sizeVariant);
                     return <button type="button" key={size} className={'detail-size-option' + (selectedSize === size ? ' is-selected' : '') + (disabled ? ' is-unavailable' : '')} disabled={disabled} onClick={() => selectSize(size)} aria-pressed={selectedSize === size}>{size}</button>;
                   })}
